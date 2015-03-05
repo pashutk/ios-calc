@@ -3,72 +3,28 @@ UI = require './ui/ui.coffee'
 console.log 'main'
 UI('ui')
 
-prod = no
-#
+prod = yes
 
-#
-#
 for i in document.querySelectorAll '#calc li'
   i.addEventListener 'click', (e) ->
-    pressButton e.target
-#
+    pressButton e.target.innerText
 
-#
-#number = (num) ->
-#  ui.dropMarks()
-#  if lastEventIsOp
-#    lastVal = output.get()
-#    lastEventIsOp = no
-#    output.clear()
-#  output.input num
-#
-#
-#operator = (op, el) ->
-#
-#  operate = (method, element) ->
-#    if lastOperator? and lastOperator isnt ops['=']
-#      a = parseFloat output.get()
-#      b = parseFloat lastVal
-#      output.set lastOperator a,b
-#    ui.mark element
-#    lastOperator = ops[method]
-#    lastEventIsOp = yes
-#
-#  if op is '='
-#    if lastOperator?
-#
-#      a = parseFloat lastVal
-#      b = parseFloat output.get()
-#      if lastOpIsEq isnt true
-#        lastVal = output.get()
-#        lastOpIsEq = yes
-#      output.set lastOperator a,b
-#    lastEventIsOp = yes
-#  else if ops[op]? then operate op, el
-#
-#
-#
-#
-#ops =
-#  '+': (a,b) ->
-#    return a+b
-#  '*': (a,b) ->
-#    return a*b
-#  '-': (a,b) ->
-#    return a-b
-#  '/': (a,b) ->
-#    return b/a
-#  '=': ->
-#    return '='
-#
-#ui =
-#  _marked: null
-#  mark: (el) ->
-#    @_marked = el
-#    el.classList.add 'pushed'
-#  dropMarks: ->
-#    if @_marked?
-#      @_marked.classList.remove 'pushed'
+mouseDictionary = '1234567890*-+=%.,/c'.split('')
+mouseDictionary.push 'enter', 'esc', ' '
+
+Mousetrap.bind mouseDictionary, (event,str) ->
+  console.log str
+  switch str
+    when '/' then pressButton '÷'
+    when '-' then pressButton '−'
+    when '*' then pressButton '×'
+    when '.' then pressButton ','
+    when 'enter' then pressButton '='
+    when 'esc' then pressButton 'AC'
+    when ' ' then pressButton '='
+    when 'c' then pressButton 'AC'
+    else
+      pressButton str
 
 lastOperator = null
 lastVal = null
@@ -77,16 +33,11 @@ lastOpIsEq = no
 buffer = 0
 memClear = yes
 
-pressButton = (el) ->
-  console.assert prod,
-    lastOperator: lastOperator
-    lastVal: lastVal
-    lastEventIsOp: lastEventIsOp
-  str = el.innerText
+pressButton = (str) ->
   if not isNaN str
     number parseInt str
   else
-    operator str, el
+    operator str
 
 number = (num) ->
   if memClear
@@ -96,16 +47,8 @@ number = (num) ->
     output.input num
 
 operator = (op) ->
-  if op is ','
-    decimal()
-  else if op is 'c'
-    clearEntry()
-  else if op is 'AC'
-    clear()
-  else if op is '%'
-    percent()
-  else if op is '±'
-    neg()
+  if staticOps[op]?
+    do staticOps[op]
   else
     lastVal = output.get()
     if memClear and lastOperator isnt "="
@@ -114,7 +57,7 @@ operator = (op) ->
       memClear = true
       if '+' is lastOperator
         buffer += parseFloat lastVal
-      else if '-' is lastOperator
+      else if '−' is lastOperator
         buffer -= parseFloat lastVal
       else if '÷' is lastOperator
         buffer /= parseFloat lastVal
@@ -125,31 +68,28 @@ operator = (op) ->
       output.set buffer
       lastOperator = op
 
-decimal = ->
-  out = output.get()
-  if memClear
-    out = "0."
-    memClear = false
-  else
-    if out.indexOf(".") is -1
-      out += "."
-  output.set out
+staticOps =
+  ',': ->
+    out = output.get()
+    if memClear
+      out = "0."
+      memClear = false
+    else
+      if out.indexOf(".") is -1
+        out += "."
+    output.set out
 
-clearEntry = ->
-  output.set 0
-  memClear = yes
+  'AC': ->
+    buffer = 0
+    lastOperator = ''
+    output.set 0
+    memClear = yes
 
-clear = ->
-  buffer = 0
-  lastOperator = ''
-  clearEntry()
+  '±': ->
+    output.set parseFloat(output.get()) * -1
 
-neg = ->
-  output.set parseFloat(output.get()) * -1
-
-
-percent = ->
-  output.set (parseFloat(output.get()) / 100) * parseFloat(buffer)
+  '%': ->
+    output.set (parseFloat(output.get()) / 100) * parseFloat(buffer)
 
 output =
   _val: '0'
@@ -166,11 +106,19 @@ output =
         @_val += data
     @refresh()
   set: (str) ->
+    outputLength = 9
+    maxNum = ''
+    for i in [0..outputLength]
+      maxNum += '9'
+    maxNum = parseInt maxNum
     str = str.toString()
     @_val = str
-    if str.length > 9
+    if str.length > outputLength
+      temp = parseFloat(str)
+#      if temp > maxNum
       document.getElementById 'output'
-        .innerText = str.substr(0,6)+'..'
+        .innerText = temp.toPrecision(5)
+
     else
       @refresh()
   get: () ->
