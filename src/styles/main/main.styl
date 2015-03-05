@@ -1,0 +1,42 @@
+// Main styles
+@import './../base/_vars'
+
+#calc
+  background-color rgb(32,32,32)
+  width: 100%
+  height: 100%
+  position: relative
+  #output
+    position: absolute
+    bottom: 420px
+    font-size: 60px
+    text-align: right
+    display: block
+    width: 100%
+    padding: 25px 25px 25px 0
+    box-sizing: border-box
+  #calc-buttons
+    position: absolute
+    bottom: 0
+    padding: 0
+    margin: 0
+    li
+      background-color rgb(210,210,210)
+      height: 84px
+      width: 84px
+      display: inline-block
+      box-sizing: border-box
+      text-align: center
+      color: black
+      font-size: 42px
+      line-height: 84px
+      cursor: pointer
+      border: 1px solid rgba(0,0,0,0.1)
+      &.top
+        background-color rgb(200,200,200)
+      &.ops
+        background-color rgb(240,128,40)
+        color: white
+      &.wide
+        width: 168px
+
